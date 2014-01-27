@@ -166,7 +166,7 @@ struct YACJS_NAME(node) *YACJS_NAME(node_dict_get)(
 
 static void skip_whitespace(const char ** const ptr) {
     while((**ptr == ' ' || **ptr == '\t' || **ptr == '\n') && **ptr != 0) {
-        *ptr = YACJS_NAME(u8s_next)(*ptr);
+        *ptr = U8S_NAME(next)(*ptr);
     }
 }
 
@@ -275,7 +275,7 @@ static struct YACJS_NAME(node) *parse_any(const char **string) {
     else if(type == TOKEN_STRING) {
         struct YACJS_NAME(node) *build = malloc(sizeof(*build));
         build->type = YACJS_NODE_STRING;
-        build->data.string = YACJS_NAME(u8s_strndup)(s, len);
+        build->data.string = U8S_NAME(strndup)(s, len);
         return build;
     }
     else if(type == TOKEN_NUMBER) {
@@ -330,7 +330,7 @@ static struct YACJS_NAME(node) *parse_dict_contents(const char **string) {
             return NULL;
         }
 
-        char *ds = YACJS_NAME(u8s_strndup)(s, len);
+        char *ds = U8S_NAME(strndup)(s, len);
 
         // expect a colon after the name
         next_token(string, &len, &type);
