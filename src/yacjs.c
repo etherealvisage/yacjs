@@ -43,7 +43,7 @@ enum token_type {
     TOKEN_TYPES
 };
 
-static enum YACJS_NAME(error) last_error = YACJS_ERROR_NONE;
+static enum YACJS_NAME(error) last_error = YACJS_NAME_CAP(ERROR_NONE);
 
 static void destroy_helper(struct YACJS_NAME(node) *node);
 static void skip_whitespace(const char ** const ptr);
@@ -57,7 +57,7 @@ static struct YACJS_NAME(node) *parse_array_contents(const char **string);
 
 enum YACJS_NAME(error) YACJS_NAME(last_error)() {
     enum YACJS_NAME(error) err = last_error;
-    last_error = YACJS_ERROR_NONE;
+    last_error = YACJS_NAME_CAP(ERROR_NONE);
     return err;
 }
 
@@ -67,7 +67,7 @@ struct YACJS_NAME(node) *YACJS_NAME(parse)(const char *string) {
     skip_whitespace(&string);
     if(string[0] != 0) {
         YACJS_NAME(destroy)(ret);
-        last_error = YACJS_ERROR_PARSE;
+        last_error = YACJS_NAME_CAP(ERROR_PARSE);
         return NULL;
     }
     return ret;
@@ -80,13 +80,13 @@ void YACJS_NAME(destroy)(struct YACJS_NAME(node) *node) {
 }
 
 static void destroy_helper(struct YACJS_NAME(node) *node) {
-    if(node->type == YACJS_NODE_ARRAY) {
+    if(node->type == YACJS_NAME_CAP(NODE_ARRAY)) {
         for(int i = 0; i < node->data.array.entries_count; i ++) {
             YACJS_NAME(destroy)(node->data.array.entries + i);
         }
         free(node->data.array.entries);
     }
-    else if(node->type == YACJS_NODE_DICT) {
+    else if(node->type == YACJS_NAME_CAP(NODE_DICT)) {
         YACJS_NAME(dict_destroy)(node->data.dict,
             (YACJS_NAME(dict_visitor))destroy_helper);
     }
@@ -99,40 +99,40 @@ enum YACJS_NAME(node_type) YACJS_NAME(node_type)(
 }
 
 bool YACJS_NAME(node_bool)(struct YACJS_NAME(node) *node) {
-    if(node->type != YACJS_NODE_BOOLEAN) {
-        last_error = YACJS_ERROR_TYPE;
+    if(node->type != YACJS_NAME_CAP(NODE_BOOLEAN)) {
+        last_error = YACJS_NAME_CAP(ERROR_TYPE);
         return NULL;
     }
     return node->data.boolean;
 }
 
 const char *YACJS_NAME(node_str)(struct YACJS_NAME(node) *node) {
-    if(node->type != YACJS_NODE_STRING) {
-        last_error = YACJS_ERROR_TYPE;
+    if(node->type != YACJS_NAME_CAP(NODE_STRING)) {
+        last_error = YACJS_NAME_CAP(ERROR_TYPE);
         return NULL;
     }
     return node->data.string;
 }
 
 int64_t YACJS_NAME(node_num)(struct YACJS_NAME(node) *node) {
-    if(node->type != YACJS_NODE_NUMBER) {
-        last_error = YACJS_ERROR_TYPE;
+    if(node->type != YACJS_NAME_CAP(NODE_NUMBER)) {
+        last_error = YACJS_NAME_CAP(ERROR_TYPE);
         return -1;
     }
     return node->data.number;
 }
 
 double YACJS_NAME(node_float)(struct YACJS_NAME(node) *node) {
-    if(node->type != YACJS_NODE_FLOAT) {
-        last_error = YACJS_ERROR_TYPE;
+    if(node->type != YACJS_NAME_CAP(NODE_FLOAT)) {
+        last_error = YACJS_NAME_CAP(ERROR_TYPE);
         return 1/0.0; // NaN
     }
     return node->data.fp;
 }
 
 int YACJS_NAME(node_array_size)(struct YACJS_NAME(node) *node) {
-    if(node->type != YACJS_NODE_ARRAY) {
-        last_error = YACJS_ERROR_TYPE;
+    if(node->type != YACJS_NAME_CAP(NODE_ARRAY)) {
+        last_error = YACJS_NAME_CAP(ERROR_TYPE);
         return -1;
     }
     return node->data.array.entries_count;
@@ -141,12 +141,12 @@ int YACJS_NAME(node_array_size)(struct YACJS_NAME(node) *node) {
 struct YACJS_NAME(node) *YACJS_NAME(node_array_elem)(
     struct YACJS_NAME(node) *node, int index) {
 
-    if(node->type != YACJS_NODE_ARRAY) {
-        last_error = YACJS_ERROR_TYPE;
+    if(node->type != YACJS_NAME_CAP(NODE_ARRAY)) {
+        last_error = YACJS_NAME_CAP(ERROR_TYPE);
         return NULL;
     }
     if(index >= node->data.array.entries_count || index < 0) {
-        last_error = YACJS_ERROR_BOUNDS;
+        last_error = YACJS_NAME_CAP(ERROR_BOUNDS);
         return NULL;
         
     }
@@ -156,8 +156,8 @@ struct YACJS_NAME(node) *YACJS_NAME(node_array_elem)(
 struct YACJS_NAME(node) *YACJS_NAME(node_dict_get)(
     struct YACJS_NAME(node) *node, const char *key) {
 
-    if(node->type != YACJS_NODE_DICT) {
-        last_error = YACJS_ERROR_TYPE;
+    if(node->type != YACJS_NAME_CAP(NODE_DICT)) {
+        last_error = YACJS_NAME_CAP(ERROR_TYPE);
         return NULL;
     }
 
@@ -274,19 +274,19 @@ static struct YACJS_NAME(node) *parse_any(const char **string) {
     else if(type == TOKEN_OPENARRAY) return parse_array_contents(string);
     else if(type == TOKEN_STRING) {
         struct YACJS_NAME(node) *build = malloc(sizeof(*build));
-        build->type = YACJS_NODE_STRING;
+        build->type = YACJS_NAME_CAP(NODE_STRING);
         build->data.string = U8S_NAME(strndup)(s, len);
         return build;
     }
     else if(type == TOKEN_NUMBER) {
         struct YACJS_NAME(node) *build = malloc(sizeof(*build));
-        build->type = YACJS_NODE_NUMBER;
+        build->type = YACJS_NAME_CAP(NODE_NUMBER);
         build->data.number = strtoll(s, NULL, 0);
         return build;
     }
     else if(type == TOKEN_FLOAT) {
         struct YACJS_NAME(node) *build = malloc(sizeof(*build));
-        build->type = YACJS_NODE_FLOAT;
+        build->type = YACJS_NAME_CAP(NODE_FLOAT);
         char *e;
         build->data.fp = strtod(s, &e);
         if(e != *string) {
@@ -298,13 +298,13 @@ static struct YACJS_NAME(node) *parse_any(const char **string) {
     }
     else if(type == TOKEN_FALSE || type == TOKEN_TRUE) {
         struct YACJS_NAME(node) *build = malloc(sizeof(*build));
-        build->type = YACJS_NODE_BOOLEAN;
+        build->type = YACJS_NAME_CAP(NODE_BOOLEAN);
         build->data.boolean = type == TOKEN_TRUE;
         return build;
     }
     else if(type == TOKEN_NULL) {
         struct YACJS_NAME(node) *build = malloc(sizeof(*build));
-        build->type = YACJS_NODE_NULL;
+        build->type = YACJS_NAME_CAP(NODE_NULL);
         return build;
     }
 
@@ -319,7 +319,7 @@ static struct YACJS_NAME(node) *parse_dict_contents(const char **string) {
     int len;
 
     struct YACJS_NAME(node) *result = malloc(sizeof(*result));
-    result->type = YACJS_NODE_DICT;
+    result->type = YACJS_NAME_CAP(NODE_DICT);
     result->data.dict = YACJS_NAME(dict_make)();
 
     while((s = next_token(string, &len, &type))) {
@@ -369,7 +369,7 @@ static struct YACJS_NAME(node) *parse_array_contents(const char **string) {
     int len;
 
     struct YACJS_NAME(node) *result = malloc(sizeof(*result));
-    result->type = YACJS_NODE_ARRAY;
+    result->type = YACJS_NAME_CAP(NODE_ARRAY);
     result->data.array.entries = NULL;
     result->data.array.entries_size = 0;
     result->data.array.entries_count = 0;
@@ -394,7 +394,7 @@ static struct YACJS_NAME(node) *parse_array_contents(const char **string) {
                 sizeof(struct YACJS_NAME(node))
                     * (result->data.array.entries_size * 2 + 1));
             if(nmem == NULL) {
-                last_error = YACJS_ERROR_MEMORY;
+                last_error = YACJS_NAME_CAP(ERROR_MEMORY);
                 return NULL;
             }
 
