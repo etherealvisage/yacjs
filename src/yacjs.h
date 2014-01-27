@@ -1,11 +1,16 @@
 #ifndef YACJS_H
 #define YACJS_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
-struct yacjs_node;
+#include "yacjs_name.h"
 
-enum yacjs_node_type {
+struct YACJS_NAME(node);
+
+enum YACJS_NAME(node_type) {
+    YACJS_NODE_NULL,
+    YACJS_NODE_BOOLEAN,
     YACJS_NODE_STRING,
     YACJS_NODE_NUMBER,
     YACJS_NODE_FLOAT,
@@ -14,7 +19,7 @@ enum yacjs_node_type {
     YACJS_NODE_TYPES
 };
 
-enum yacjs_error {
+enum YACJS_NAME(error) {
     YACJS_ERROR_NONE,
     YACJS_ERROR_PARSE,
     YACJS_ERROR_MEMORY,
@@ -23,18 +28,20 @@ enum yacjs_error {
     YACJS_ERROR_TYPES
 };
 
-enum yacjs_error yacjs_last_error();
+enum YACJS_NAME(error) YACJS_NAME(last_error)();
 
-struct yacjs_node *yacjs_parse(const char *string);
-void yacjs_destroy(struct yacjs_node *node);
+struct YACJS_NAME(node) *YACJS_NAME(parse)(const char *string);
+void YACJS_NAME(destroy)(struct YACJS_NAME(node) *node);
 
-enum yacjs_node_type yacjs_node_type(struct yacjs_node *node);
-const char *yacjs_node_str(struct yacjs_node *node);
-int64_t yacjs_node_num(struct yacjs_node *node);
-double yacjs_node_float(struct yacjs_node *node);
-int yacjs_node_array_size(struct yacjs_node *node);
-struct yacjs_node *yacjs_node_array_elem(struct yacjs_node *node, int index);
-struct yacjs_node *yacjs_node_dict_get(struct yacjs_node *node,
-    const char *key);
+enum YACJS_NAME(node_type) YACJS_NAME(node_type)(struct YACJS_NAME(node) *node);
+bool YACJS_NAME(node_bool)(struct YACJS_NAME(node) *node);
+const char *YACJS_NAME(node_str)(struct YACJS_NAME(node) *node);
+int64_t YACJS_NAME(node_num)(struct YACJS_NAME(node) *node);
+double YACJS_NAME(node_float)(struct YACJS_NAME(node) *node);
+int YACJS_NAME(node_array_size)(struct YACJS_NAME(node) *node);
+struct YACJS_NAME(node) *YACJS_NAME(node_array_elem)(
+    struct YACJS_NAME(node) *node, int index);
+struct YACJS_NAME(node) *YACJS_NAME(node_dict_get)(
+    struct YACJS_NAME(node) *node, const char *key);
 
 #endif

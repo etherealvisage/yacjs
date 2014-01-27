@@ -3,7 +3,9 @@
 
 #include <stddef.h>
 
-#define U8S_NAME(n) yacjs_u8s_ ## n
+#include "yacjs_name.h"
+
+#define U8S_NAME(n) YACJS_NAME(u8s_ ## n)
 
 typedef char * U8S_NAME(ptr);
 typedef const char * U8S_NAME(cptr);

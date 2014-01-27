@@ -1,15 +1,18 @@
 #ifndef YACJS_DICT_H
 #define YACJS_DICT_H
 
-struct yacjs_dict;
+#include "yacjs_name.h"
 
-typedef void (*yacjs_dict_visitor)(void *value);
+struct YACJS_NAME(dict);
 
-struct yacjs_dict *yacjs_dict_make();
-void yacjs_dict_destroy(struct yacjs_dict *dict, yacjs_dict_visitor visitor);
+typedef void (*YACJS_NAME(dict_visitor))(void *value);
 
-void yacjs_dict_set(struct yacjs_dict *dict, const char *key,
+struct YACJS_NAME(dict) *YACJS_NAME(dict_make)();
+void YACJS_NAME(dict_destroy)(struct YACJS_NAME(dict) *dict,
+    YACJS_NAME(dict_visitor) visitor);
+
+void YACJS_NAME(dict_set)(struct YACJS_NAME(dict) *dict, const char *key,
     void *value);
-void *yacjs_dict_get(struct yacjs_dict *dict, const char *key);
+void *YACJS_NAME(dict_get)(struct YACJS_NAME(dict) *dict, const char *key);
 
 #endif

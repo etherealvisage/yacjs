@@ -4,26 +4,26 @@
 
 #include "yacjs_dict.h"
 
-struct yacjs_dict_entry {
+struct YACJS_NAME(dict_entry) {
     char *key;
     void *value;
     uint64_t key_hash;
 };
 
-struct yacjs_dict {
-    struct yacjs_dict_entry *entries;
+struct YACJS_NAME(dict) {
+    struct YACJS_NAME(dict_entry) *entries;
     int entries_size;
     int entries_count;
 };
 
 static char *ystrdup(const char *string);
 static uint64_t string_hash(const char *string);
-static void resize(struct yacjs_dict *dict, int newsize);
-static void insert_helper(struct yacjs_dict *dict, uint64_t hash,
+static void resize(struct YACJS_NAME(dict) *dict, int newsize);
+static void insert_helper(struct YACJS_NAME(dict) *dict, uint64_t hash,
     const char *key, void *value);
 
-struct yacjs_dict *yacjs_dict_make() {
-    struct yacjs_dict *result = malloc(sizeof(*result));
+struct YACJS_NAME(dict) *YACJS_NAME(dict_make)() {
+    struct YACJS_NAME(dict) *result = malloc(sizeof(*result));
 
     result->entries = NULL;
     result->entries_size = 0;
@@ -32,7 +32,9 @@ struct yacjs_dict *yacjs_dict_make() {
     return result;
 }
 
-void yacjs_dict_destroy(struct yacjs_dict *dict, yacjs_dict_visitor visitor) {
+void YACJS_NAME(dict_destroy)(struct YACJS_NAME(dict) *dict,
+    YACJS_NAME(dict_visitor) visitor) {
+
     if(visitor) {
         for(int i = 0; i < dict->entries_size; i ++) {
             if(dict->entries[i].key) {
@@ -45,7 +47,7 @@ void yacjs_dict_destroy(struct yacjs_dict *dict, yacjs_dict_visitor visitor) {
     free(dict);
 }
 
-void yacjs_dict_set(struct yacjs_dict *dict, const char *key,
+void YACJS_NAME(dict_set)(struct YACJS_NAME(dict) *dict, const char *key,
     void *value) {
 
     if(dict->entries_size == dict->entries_count) {
@@ -56,7 +58,7 @@ void yacjs_dict_set(struct yacjs_dict *dict, const char *key,
     insert_helper(dict, hash, ystrdup(key), value);
 }
 
-void *yacjs_dict_get(struct yacjs_dict *dict, const char *key) {
+void *YACJS_NAME(dict_get)(struct YACJS_NAME(dict) *dict, const char *key) {
     uint64_t hash = string_hash(key);
     for(int i = 0; i < dict->entries_size; i ++) {
         int in = (i+hash) % dict->entries_size;
@@ -82,8 +84,8 @@ static uint64_t string_hash(const char *string) {
     return result;
 }
 
-static void resize(struct yacjs_dict *dict, int newsize) {
-    struct yacjs_dict_entry *oentries = dict->entries;
+static void resize(struct YACJS_NAME(dict) *dict, int newsize) {
+    struct YACJS_NAME(dict_entry) *oentries = dict->entries;
     int osize = dict->entries_size;
     dict->entries_size = newsize;
     dict->entries_count = 0;
@@ -96,7 +98,7 @@ static void resize(struct yacjs_dict *dict, int newsize) {
     }
 }
 
-static void insert_helper(struct yacjs_dict *dict, uint64_t hash,
+static void insert_helper(struct YACJS_NAME(dict) *dict, uint64_t hash,
     const char *key, void *value) {
     for(int i = 0; i < dict->entries_size; i ++) {
         int in = (i+hash) % dict->entries_size;
