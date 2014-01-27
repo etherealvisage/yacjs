@@ -41,6 +41,7 @@ void yacjs_dict_destroy(struct yacjs_dict *dict, yacjs_dict_visitor visitor) {
             }
         }
     }
+    free(dict->entries);
     free(dict);
 }
 
@@ -105,4 +106,5 @@ static void insert_helper(struct yacjs_dict *dict, uint64_t hash,
         dict->entries[in].value = value;
         break;
     }
+    dict->entries_count ++;
 }

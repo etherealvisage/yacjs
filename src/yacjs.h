@@ -26,6 +26,7 @@ enum yacjs_error {
 enum yacjs_error yacjs_last_error();
 
 struct yacjs_node *yacjs_parse(const char *string);
+void yacjs_destroy(struct yacjs_node *node);
 
 enum yacjs_node_type yacjs_node_type(struct yacjs_node *node);
 const char *yacjs_node_str(struct yacjs_node *node);
