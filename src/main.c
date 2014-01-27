@@ -5,12 +5,16 @@
 int main() {
     struct yacjs_node *root = yacjs_parse("{\"foo\": \"bar\", \"baz\": [\"a\", \"b\", \"c\"]}");
 
-    printf("Result: %p\n", root);
-    printf("foo: %p\n", yacjs_node_dict_get(root, "foo"));
-    printf("foo string: %s\n", yacjs_node_str(yacjs_node_dict_get(root, "foo")));
+    FILE *fp = fopen("test/test1.json", "r");
+    char buffer[8192];
+    int ret = fread(buffer, 1, 8192, fp);
+    buffer[ret] = 0;
+    fclose(fp);
 
-    struct yacjs_node *baz = yacjs_node_dict_get(root, "baz");
-    printf("baz: %p\n", baz);
-    printf("\tfirst element string: %s\n", yacjs_node_str(yacjs_node_array_elem(baz, 0)));
+    root = yacjs_parse(buffer);
+    printf("root: %p\n", root);
+
+    //printf("%f\n", yacjs_node_float(yacjs_node_array_elem(root, 2)));
+
     return 0;
 }

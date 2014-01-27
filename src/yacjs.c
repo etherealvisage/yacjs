@@ -1,5 +1,7 @@
+#include <stdbool.h>
 #include <stdio.h> // for debugging
 #include <stdlib.h>
+#include <ctype.h>
 
 #include "yacjs.h"
 #include "yacjs_dict.h"
@@ -23,6 +25,8 @@ struct yacjs_node {
 enum token_type {
     TOKEN_STRING,
     TOKEN_NUMBER,
+    TOKEN_FLOAT,
+    TOKEN_FPNUMBER,
     TOKEN_OPENDICT,
     TOKEN_CLOSEDICT,
     TOKEN_OPENARRAY,
@@ -144,7 +148,7 @@ struct yacjs_node *yacjs_node_dict_get(struct yacjs_node *node,
 }
 
 static void skip_whitespace(const char ** const ptr) {
-    while((**ptr == ' ' || **ptr == '\t') && **ptr != 0) {
+    while((**ptr == ' ' || **ptr == '\t' || **ptr == '\n') && **ptr != 0) {
         *ptr = yacjs_u8s_next(*ptr);
     }
 }
@@ -174,6 +178,21 @@ static const char *next_token(const char ** const ptr, int *length,
         *type = TOKEN_STRING;
         return start;
     }
+    else if(isdigit(**ptr)) {
+        // TODO: support floating-point etc.
+        const char *start = (*ptr);
+        *length = 0;
+        bool is_fp = false;
+        while((isdigit(**ptr) || **ptr == '.' || **ptr == 'e') && **ptr != 0) {
+            if(**ptr == '.' || **ptr == 'e') is_fp = true;
+            (*ptr) ++, (*length) ++;
+        }
+        if(*ptr == 0) return NULL;
+        if(is_fp) *type = TOKEN_FLOAT;
+        else *type = TOKEN_NUMBER;
+
+        return start;
+    }
     else if(**ptr == '{') {
         *type = TOKEN_OPENDICT;
         return (*ptr)++;
@@ -198,6 +217,8 @@ static const char *next_token(const char ** const ptr, int *length,
         *type = TOKEN_COLON;
         return (*ptr)++;
     }
+
+    printf("Don't know what to do with a '%c'\n", **ptr);
 
     *type = TOKEN_ERROR;
 
@@ -230,6 +251,18 @@ static struct yacjs_node *parse_any(const char **string) {
         struct yacjs_node *build = malloc(sizeof(*build));
         build->type = YACJS_NODE_NUMBER;
         build->data.number = strtoll(s, NULL, 0);
+        return build;
+    }
+    else if(type == TOKEN_FLOAT) {
+        struct yacjs_node *build = malloc(sizeof(*build));
+        build->type = YACJS_NODE_FLOAT;
+        char *e;
+        build->data.fp = strtod(s, &e);
+        if(e != *string) {
+            free(build);
+            // error parsing number, not everything was used
+            return NULL;
+        }
         return build;
     }
 
@@ -316,7 +349,8 @@ static struct yacjs_node *parse_array_contents(const char **string) {
             == result->data.array.entries_count) {
 
             void *nmem = realloc(result->data.array.entries,
-                result->data.array.entries_size * 2 + 1);
+                sizeof(struct yacjs_node)
+                    * (result->data.array.entries_size * 2 + 1));
             if(nmem == NULL) {
                 last_error = YACJS_ERROR_MEMORY;
                 return NULL;
