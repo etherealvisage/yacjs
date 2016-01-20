@@ -8,10 +8,12 @@
 #include "yacjs_dict.h"
 #include "yacjs_u8s.h"
 
+#define zalloc(size) calloc(size, 1)
+
 struct YACJS_NAME(node) {
     enum YACJS_NAME(node_type) type;
     union {
-        const char *string;
+        char *string;
         int64_t number;
         double fp;
         struct {
@@ -82,13 +84,16 @@ void YACJS_NAME(destroy)(struct YACJS_NAME(node) *node) {
 static void destroy_helper(struct YACJS_NAME(node) *node) {
     if(node->type == YACJS_NAME_CAP(NODE_ARRAY)) {
         for(int i = 0; i < node->data.array.entries_count; i ++) {
-            YACJS_NAME(destroy)(node->data.array.entries + i);
+            destroy_helper(node->data.array.entries + i);
         }
         free(node->data.array.entries);
     }
     else if(node->type == YACJS_NAME_CAP(NODE_DICT)) {
         YACJS_NAME(dict_destroy)(node->data.dict,
-            (YACJS_NAME(dict_visitor))destroy_helper);
+            (YACJS_NAME(dict_visitor))YACJS_NAME(destroy));
+    }
+    else if(node->type == YACJS_NAME_CAP(NODE_STRING)) {
+        free(node->data.string);
     }
 }
 
@@ -273,19 +278,19 @@ static struct YACJS_NAME(node) *parse_any(const char **string) {
     if(type == TOKEN_OPENDICT) return parse_dict_contents(string);
     else if(type == TOKEN_OPENARRAY) return parse_array_contents(string);
     else if(type == TOKEN_STRING) {
-        struct YACJS_NAME(node) *build = malloc(sizeof(*build));
+        struct YACJS_NAME(node) *build = zalloc(sizeof(*build));
         build->type = YACJS_NAME_CAP(NODE_STRING);
         build->data.string = U8S_NAME(strndup)(s, len);
         return build;
     }
     else if(type == TOKEN_NUMBER) {
-        struct YACJS_NAME(node) *build = malloc(sizeof(*build));
+        struct YACJS_NAME(node) *build = zalloc(sizeof(*build));
         build->type = YACJS_NAME_CAP(NODE_NUMBER);
         build->data.number = strtoll(s, NULL, 0);
         return build;
     }
     else if(type == TOKEN_FLOAT) {
-        struct YACJS_NAME(node) *build = malloc(sizeof(*build));
+        struct YACJS_NAME(node) *build = zalloc(sizeof(*build));
         build->type = YACJS_NAME_CAP(NODE_FLOAT);
         char *e;
         build->data.fp = strtod(s, &e);
@@ -297,13 +302,13 @@ static struct YACJS_NAME(node) *parse_any(const char **string) {
         return build;
     }
     else if(type == TOKEN_FALSE || type == TOKEN_TRUE) {
-        struct YACJS_NAME(node) *build = malloc(sizeof(*build));
+        struct YACJS_NAME(node) *build = zalloc(sizeof(*build));
         build->type = YACJS_NAME_CAP(NODE_BOOLEAN);
         build->data.boolean = type == TOKEN_TRUE;
         return build;
     }
     else if(type == TOKEN_NULL) {
-        struct YACJS_NAME(node) *build = malloc(sizeof(*build));
+        struct YACJS_NAME(node) *build = zalloc(sizeof(*build));
         build->type = YACJS_NAME_CAP(NODE_NULL);
         return build;
     }
@@ -318,7 +323,7 @@ static struct YACJS_NAME(node) *parse_dict_contents(const char **string) {
     const char *s;
     int len;
 
-    struct YACJS_NAME(node) *result = malloc(sizeof(*result));
+    struct YACJS_NAME(node) *result = zalloc(sizeof(*result));
     result->type = YACJS_NAME_CAP(NODE_DICT);
     result->data.dict = YACJS_NAME(dict_make)();
 
@@ -327,6 +332,7 @@ static struct YACJS_NAME(node) *parse_dict_contents(const char **string) {
         if(type == TOKEN_CLOSEDICT) break;
         // we expect a string here if it's not a closing dictionary
         else if(type != TOKEN_STRING) {
+            YACJS_NAME(destroy)(result);
             return NULL;
         }
 
@@ -335,13 +341,17 @@ static struct YACJS_NAME(node) *parse_dict_contents(const char **string) {
         // expect a colon after the name
         next_token(string, &len, &type);
         if(type != TOKEN_COLON) {
+            YACJS_NAME(destroy)(result);
+            free(ds);
             return NULL;
         }
 
         struct YACJS_NAME(node) *value = parse_any(string);
 
         if(value == NULL) {
-            // TODO: leaked memory
+            YACJS_NAME(destroy)(result);
+            YACJS_NAME(destroy)(value);
+            free(ds);
             return NULL;
         }
 
@@ -356,7 +366,7 @@ static struct YACJS_NAME(node) *parse_dict_contents(const char **string) {
         }
     }
     if(!s) {
-        // TODO: leaked memory
+        YACJS_NAME(destroy)(result);
         return NULL;
     }
 
@@ -368,7 +378,7 @@ static struct YACJS_NAME(node) *parse_array_contents(const char **string) {
     const char *s;
     int len;
 
-    struct YACJS_NAME(node) *result = malloc(sizeof(*result));
+    struct YACJS_NAME(node) *result = zalloc(sizeof(*result));
     result->type = YACJS_NAME_CAP(NODE_ARRAY);
     result->data.array.entries = NULL;
     result->data.array.entries_size = 0;
@@ -383,7 +393,8 @@ static struct YACJS_NAME(node) *parse_array_contents(const char **string) {
         }
         struct YACJS_NAME(node) *next = parse_any(string);
         if(!next) {
-            // TODO: leaked memory
+            YACJS_NAME(destroy)(result);
+            YACJS_NAME(destroy)(next);
             return NULL;
         }
 
@@ -395,6 +406,8 @@ static struct YACJS_NAME(node) *parse_array_contents(const char **string) {
                     * (result->data.array.entries_size * 2 + 1));
             if(nmem == NULL) {
                 last_error = YACJS_NAME_CAP(ERROR_MEMORY);
+                YACJS_NAME(destroy)(result);
+                YACJS_NAME(destroy)(next);
                 return NULL;
             }
 
@@ -413,7 +426,7 @@ static struct YACJS_NAME(node) *parse_array_contents(const char **string) {
         }
     }
     if(!s) {
-        // TODO: leaked memory
+        YACJS_NAME(destroy)(result);
         return NULL;
     }
 

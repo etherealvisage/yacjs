@@ -20,7 +20,7 @@ static char *ystrdup(const char *string);
 static uint64_t string_hash(const char *string);
 static void resize(struct YACJS_NAME(dict) *dict, int newsize);
 static void insert_helper(struct YACJS_NAME(dict) *dict, uint64_t hash,
-    const char *key, void *value);
+    char *key, void *value);
 
 struct YACJS_NAME(dict) *YACJS_NAME(dict_make)() {
     struct YACJS_NAME(dict) *result = malloc(sizeof(*result));
@@ -43,6 +43,7 @@ void YACJS_NAME(dict_destroy)(struct YACJS_NAME(dict) *dict,
             }
         }
     }
+
     free(dict->entries);
     free(dict);
 }
@@ -96,14 +97,15 @@ static void resize(struct YACJS_NAME(dict) *dict, int newsize) {
         insert_helper(dict, oentries[i].key_hash, oentries[i].key,
             oentries[i].value);
     }
+    free(oentries);
 }
 
 static void insert_helper(struct YACJS_NAME(dict) *dict, uint64_t hash,
-    const char *key, void *value) {
+    char *key, void *value) {
     for(int i = 0; i < dict->entries_size; i ++) {
         int in = (i+hash) % dict->entries_size;
         if(dict->entries[in].key) continue;
-        dict->entries[in].key = ystrdup(key);
+        dict->entries[in].key = key;
         dict->entries[in].key_hash = hash;
         dict->entries[in].value = value;
         break;
